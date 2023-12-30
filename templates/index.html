@@ -9,18 +9,26 @@
             document.getElementById('dropdown').addEventListener('change', handleDropdownChange);
         });
 
-        function submitData() {
-            var selectedOption = document.getElementById("dropdown").value;
+                function submitData() {
+            var dropdown = document.getElementById("dropdown");
+            var selectedIndex = dropdown.selectedIndex;
+            var selectedOption = dropdown.value;
             var startDate = document.getElementById("startDate").value;
             var endDate = document.getElementById("endDate").value;
-            var extraParameter = document.getElementById("extraParameter") ? document.getElementById("extraParameter").value : '';
 
             var data = {
                 selectedOption: selectedOption,
                 startDate: startDate,
-                endDate: endDate,
-                extraParameter: extraParameter
+                endDate: endDate
             };
+
+            if (selectedIndex === 1) {
+                data.additionalOption = document.getElementById("additionalDropdown").value;
+            } else if (selectedIndex === 2) {
+                data.optionThreeValue1 = document.getElementById("optionThreeDropdown1").value;
+                data.optionThreeValue2 = document.getElementById("optionThreeDropdown2").value;
+                data.optionThreeValue3 = document.getElementById("optionThreeDropdown3").value;
+            }
 
             fetch('/submit', {
                 method: 'POST',
@@ -32,16 +40,10 @@
             .then(response => response.json())
             .then(data => {
                 if(data.success) {
-                    var table = document.getElementById('data-table');
-                    var row = table.insertRow();
-                    var cell1 = row.insertCell(0);
-                    var cell2 = row.insertCell(1);
-                    var cell3 = row.insertCell(2);
-                    var cell4 = row.insertCell(3);
-                    cell1.innerHTML = selectedOption;
-                    cell2.innerHTML = startDate;
-                    cell3.innerHTML = endDate;
-                    cell4.innerHTML = extraParameter;
+                    document.getElementById('downloadExcel').href = data.excelUrl;
+                    document.getElementById('exchangeRatePlot').src = data.plotUrl;
+                    document.getElementById('exchangeRatePlot').style.display = 'block';
+                    alert("Дані успішно збережені. Тепер ви можете завантажити файл.");
                 }
             })
             .catch((error) => {
@@ -50,44 +52,73 @@
         }
 
         function handleDropdownChange() {
-            var selectedOption = document.getElementById("dropdown").selectedIndex;
-            var extraInputContainer = document.getElementById("extra-input-container");
-            extraInputContainer.innerHTML = '';
+            var selectedIndex = document.getElementById("dropdown").selectedIndex;
+            var additionalDropdownContainer = document.getElementById("additional-dropdown-container");
+            var optionThreeDropdowns = document.getElementById("optionThreeDropdowns");
 
-            if(selectedOption === 2) { // Третя опція в списку
-                var input = document.createElement("input");
-                input.type = "text";
-                input.id = "extraParameter";
-                input.name = "extraParameter";
-                input.placeholder = "Додатковий показник";
-                extraInputContainer.appendChild(input);
-            }
+            additionalDropdownContainer.style.display = selectedIndex === 1 ? 'block' : 'none';
+            optionThreeDropdowns.style.display = selectedIndex === 2 ? 'block' : 'none';
         }
     </script>
 </head>
 <body>
     <div class="container">
         <h2>Отримання статистичної інформації НБУ</h2>
+        <br>
+        Оберіть показник:
+        <br>
         <form id="data-form">
             <select name="dropdown" id="dropdown">
                 {% for key, name in options.items() %}
                     <option value="{{ key }}">{{ name }}</option>
                 {% endfor %}
             </select>
+
+            <!-- Додатковий випадаючий список для другої опції -->
+            <div id="additional-dropdown-container" style="display: none;">
+                <select name="additionalDropdown" id="additionalDropdown">
+                    {% for key, name in add_options_1.items() %}
+                        <option value="{{ key }}">{{ name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <!-- Додаткові випадаючі списки для третьої опції -->
+            <div id="optionThreeDropdowns" style="display: none;">
+                <select id="optionThreeDropdown1">
+                    {% for key, name in time_options.items() %}
+                        <option value="{{ key }}">{{ name }}</option>
+                    {% endfor %}
+                </select>
+                <select id="optionThreeDropdown2">
+                    {% for key, name in type_activity.items() %}
+                        <option value="{{ key }}">{{ name }}</option>
+                    {% endfor %}
+                </select>
+                <select id="optionThreeDropdown3">
+                    {% for key, name in type_of_gdp.items() %}
+                        <option value="{{ key }}">{{ name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <br>
+            Введіть часовий проміжок:
+            <br>
             <input type="date" id="startDate" name="startDate" placeholder="Дата початку">
             <input type="date" id="endDate" name="endDate" placeholder="Дата кінця">
-            <div id="extra-input-container"></div>
-            <button type="button" id="submit-button">Зберегти</button>
+            <button type="button" id="submit-button">Відправити</button>
         </form>
-        <table id="data-table">
-            <tr>
-                <th>Вибрана опція</th>
-                <th>Дата початку</th>
-                <th>Дата кінця</th>
-                <th>Додатковий показник</th>
-            </tr>
-            <!-- Рядки будуть додаватися тут -->
-        </table>
+        <br>
+        <img id="exchangeRatePlot" src="" alt="" style="display:none; width:600px; height:auto ">
+        <a href="" id="downloadExcel" download="download.xlsx">
+            <button type="button">Завантажити Excel</button>
+        </a>
     </div>
+
+    <footer>
+        <p>Одеський національний економічний університет</p>
+        <p>Розробник: Havryliuk Yurii</p>
+    </footer>
 </body>
 </html>
