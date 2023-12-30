@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Отримання статистичної інформації НБУ</title>
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='style.css') }}">
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            document.getElementById('submit-button').addEventListener('click', submitData);
+            document.getElementById('dropdown').addEventListener('change', handleDropdownChange);
+        });
+
+        function submitData() {
+            var selectedOption = document.getElementById("dropdown").value;
+            var startDate = document.getElementById("startDate").value;
+            var endDate = document.getElementById("endDate").value;
+            var extraParameter = document.getElementById("extraParameter") ? document.getElementById("extraParameter").value : '';
+
+            var data = {
+                selectedOption: selectedOption,
+                startDate: startDate,
+                endDate: endDate,
+                extraParameter: extraParameter
+            };
+
+            fetch('/submit', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(data),
+            })
+            .then(response => response.json())
+            .then(data => {
+                if(data.success) {
+                    var table = document.getElementById('data-table');
+                    var row = table.insertRow();
+                    var cell1 = row.insertCell(0);
+                    var cell2 = row.insertCell(1);
+                    var cell3 = row.insertCell(2);
+                    var cell4 = row.insertCell(3);
+                    cell1.innerHTML = selectedOption;
+                    cell2.innerHTML = startDate;
+                    cell3.innerHTML = endDate;
+                    cell4.innerHTML = extraParameter;
+                }
+            })
+            .catch((error) => {
+                console.error('Error:', error);
+            });
+        }
+
+        function handleDropdownChange() {
+            var selectedOption = document.getElementById("dropdown").selectedIndex;
+            var extraInputContainer = document.getElementById("extra-input-container");
+            extraInputContainer.innerHTML = '';
+
+            if(selectedOption === 2) { // Третя опція в списку
+                var input = document.createElement("input");
+                input.type = "text";
+                input.id = "extraParameter";
+                input.name = "extraParameter";
+                input.placeholder = "Додатковий показник";
+                extraInputContainer.appendChild(input);
+            }
+        }
+    </script>
+</head>
+<body>
+    <div class="container">
+        <h2>Отримання статистичної інформації НБУ</h2>
+        <form id="data-form">
+            <select name="dropdown" id="dropdown">
+                {% for key, name in options.items() %}
+                    <option value="{{ key }}">{{ name }}</option>
+                {% endfor %}
+            </select>
+            <input type="date" id="startDate" name="startDate" placeholder="Дата початку">
+            <input type="date" id="endDate" name="endDate" placeholder="Дата кінця">
+            <div id="extra-input-container"></div>
+            <button type="button" id="submit-button">Зберегти</button>
+        </form>
+        <table id="data-table">
+            <tr>
+                <th>Вибрана опція</th>
+                <th>Дата початку</th>
+                <th>Дата кінця</th>
+                <th>Додатковий показник</th>
+            </tr>
+            <!-- Рядки будуть додаватися тут -->
+        </table>
+    </div>
+</body>
+</html>
